@@ -1,7 +1,6 @@
 const express = require('express');
 const XError = require('./xError')
 const {merge, mergeSort, mean } = require('./func');
-const { json } = require('express');
 
 const app = express();
 
@@ -15,7 +14,7 @@ app.get('/mean', (req, res, next)=>{
         for(let x of list){
             let num = parseInt(x)
             if(isNaN(x)){
-                throw new XError("Invalid query     parameter", 403)
+                throw new XError(`${x} is not a number`, 400)
             }
             total += num;
         }
@@ -37,7 +36,7 @@ app.get('/median', (req,res,next)=>{
         for(let x of list){
             let num = parseInt(x)
             if(isNaN(x)){
-                throw new XError("Invalid query     parameter", 403)
+                throw new XError(`${x} is not a number`, 400)
             }
             nums.push(num)
         }
@@ -64,11 +63,13 @@ app.get('/mode', (req, res, next) => {
     try{
         const list = req.query.nums.split(',')
         const count = {}
-        let mode;
+        let mode = [];
+        let topCount = 0;
+        let counts = new Set()
         for(let x of list){
             let num = parseInt(x)
             if(isNaN(x)){
-                throw new XError("Invalid query     parameter", 403)
+                throw new XError(`${x} is not a number`, 400)
             }
             if(count[num]){
                 count[num]++
@@ -77,12 +78,17 @@ app.get('/mode', (req, res, next) => {
             }
         }
         for(let key of Object.keys(count)){
-            console.log(key, count[key])
-            if((count[key] > mode || mode === undefined) && count[key] > 1){
-                mode = key
+            counts.add(count[key])
+            if(count[key] === topCount && count[key] > 1){
+                mode.push(key)
+            }
+            if((count[key] > topCount || mode === undefined) && count[key] > 1){
+                mode = [key]
+                topCount = count[key]
             }
         }
-        if(mode === undefined){
+        console.log(counts.size, counts)
+        if(mode.length === 0 || counts.size === 1){
             mode = 'none'
         }
          const json = {
